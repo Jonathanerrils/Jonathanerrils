@@ -66,6 +66,21 @@ export const onCheckInWritten = onDocumentWritten(
         { waitingCount: FieldValue.increment(1) },
         { merge: true }
       );
+      // Phase 3 analytics: bump the per-stop, per-day, per-hour demand
+      // counters that feed the admin dashboard (peak hours / daily
+      // patterns). Ghana is UTC year-round, so UTC date/hour == local.
+      const now = new Date();
+      const dateKey = now.toISOString().slice(0, 10);
+      batch.set(
+        db.doc(`analytics_daily/${afterStop}_${dateKey}`),
+        {
+          stopId: afterStop,
+          date: dateKey,
+          total: FieldValue.increment(1),
+          hourly: { [`h${now.getUTCHours()}`]: FieldValue.increment(1) },
+        },
+        { merge: true }
+      );
     }
     await batch.commit();
   }
@@ -147,6 +162,24 @@ export const onStopStatusChanged = onDocumentUpdated(
     const justArrived = !before.arrivedAt && after.arrivedAt;
 
     if (!enRouteStarted && !justArrived) return;
+
+    // Phase 3: log the service event. `trips` is the append-only record of
+    // shuttles serving stops — the raw material for utilisation reports.
+    if (justArrived) {
+      try {
+        await db.collection("trips").add({
+          stopId,
+          stopName,
+          driverUid: (after.enRouteBy as string | undefined) ?? null,
+          enRouteAt: after.enRouteAt ?? null,
+          arrivedAt: after.arrivedAt,
+          waitingAtArrival: (after.waitingCount as number | undefined) ?? 0,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      } catch (err) {
+        logger.warn(`trip log failed for ${stopId}`, err as Error);
+      }
+    }
 
     const message = justArrived
       ? {

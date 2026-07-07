@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/bus_stop.dart';
 import '../../domain/repositories/check_in_repository.dart';
+import '../../domain/repositories/shuttle_repository.dart';
 import '../../domain/repositories/stop_repository.dart';
 import '../auth/auth_controller.dart';
 import '../common/last_updated_banner.dart';
@@ -26,6 +27,7 @@ class StudentHomeScreen extends StatelessWidget {
         student: student,
         stopRepository: ctx.read<StopRepository>(),
         checkInRepository: ctx.read<CheckInRepository>(),
+        shuttleRepository: ctx.read<ShuttleRepository>(),
       ),
       child: const _StudentHomeView(),
     );
@@ -229,9 +231,18 @@ class _CheckedIn extends StatelessWidget {
           const SizedBox(height: 8),
           Chip(
             avatar: const Icon(Icons.directions_bus, size: 18),
-            label: const Text('A shuttle is on its way to this stop'),
+            label: Text(controller.etaMinutesToMyStop == null
+                ? 'A shuttle is on its way to this stop'
+                : 'A shuttle is on its way — ~${controller.etaMinutesToMyStop} min'),
             backgroundColor:
                 AppColors.knustGold.withValues(alpha: 0.25),
+          ),
+        ] else if (controller.etaMinutesToMyStop != null) ...[
+          const SizedBox(height: 8),
+          Chip(
+            avatar: const Icon(Icons.near_me, size: 18),
+            label: Text(
+                'Nearest shuttle ~${controller.etaMinutesToMyStop} min away'),
           ),
         ],
         const SizedBox(height: 8),

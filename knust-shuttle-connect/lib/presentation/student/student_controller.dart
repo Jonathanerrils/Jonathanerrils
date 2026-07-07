@@ -10,7 +10,9 @@ import '../../core/utils/geo_utils.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/bus_stop.dart';
 import '../../domain/entities/check_in.dart';
+import '../../domain/entities/shuttle.dart';
 import '../../domain/repositories/check_in_repository.dart';
+import '../../domain/repositories/shuttle_repository.dart';
 import '../../domain/repositories/stop_repository.dart';
 import '../../domain/usecases/cancel_check_in.dart';
 import '../../domain/usecases/check_in_at_stop.dart';
@@ -26,18 +28,21 @@ class StudentController extends ChangeNotifier {
   final AppUser student;
   final StopRepository _stops;
   final CheckInRepository _checkIns;
+  final ShuttleRepository _shuttles;
   final CheckInAtStop _checkInAtStop;
   final CancelCheckIn _cancelCheckIn;
 
   StreamSubscription<List<BusStop>>? _stopsSub;
   StreamSubscription<CheckIn?>? _checkInSub;
   StreamSubscription<Position>? _exitWatchSub;
+  StreamSubscription<List<Shuttle>>? _shuttleSub;
 
   List<BusStop> stops = const [];
   bool stopsFromCacheOnly = true;
   DateTime? stopsUpdatedAt;
   Position? position;
   CheckIn? myCheckIn;
+  List<Shuttle> shuttles = const [];
   String? locationError;
   bool workingOnCheckIn = false;
 
@@ -45,8 +50,10 @@ class StudentController extends ChangeNotifier {
     required this.student,
     required StopRepository stopRepository,
     required CheckInRepository checkInRepository,
+    required ShuttleRepository shuttleRepository,
   })  : _stops = stopRepository,
         _checkIns = checkInRepository,
+        _shuttles = shuttleRepository,
         _checkInAtStop = CheckInAtStop(checkInRepository),
         _cancelCheckIn = CancelCheckIn(checkInRepository) {
     _init();
@@ -93,15 +100,18 @@ class StudentController extends ChangeNotifier {
       unawaited(_stops.cacheStops(live));
     });
 
-    // 3. My active check-in.
+    // 3. My active check-in. Shuttle positions are only streamed while
+    //    checked in (that's when the ETA matters) — data-light by default.
     _checkInSub = _checkIns.watchMyCheckIn(student.uid).listen((checkIn) {
       final hadCheckIn = myCheckIn != null;
       myCheckIn = checkIn;
       notifyListeners();
       if (checkIn != null) {
         _startGeofenceExitWatch(checkIn);
+        _startShuttleWatch();
       } else if (hadCheckIn) {
         _stopGeofenceExitWatch();
+        _stopShuttleWatch();
       }
     });
 
@@ -216,6 +226,32 @@ class StudentController extends ChangeNotifier {
     _exitWatchSub = null;
   }
 
+  void _startShuttleWatch() {
+    _shuttleSub ??= _shuttles.watchOnDutyShuttles().listen((live) {
+      shuttles = live;
+      notifyListeners();
+    });
+  }
+
+  void _stopShuttleWatch() {
+    _shuttleSub?.cancel();
+    _shuttleSub = null;
+    shuttles = const [];
+  }
+
+  /// Rough minutes until the nearest live shuttle reaches the stop the
+  /// student is checked in at; null when unknown.
+  int? get etaMinutesToMyStop {
+    final stop = checkedInStop;
+    if (stop == null || shuttles.isEmpty) return null;
+    double best = double.infinity;
+    for (final shuttle in shuttles) {
+      final eta = shuttle.etaMinutesTo(stop.latitude, stop.longitude);
+      if (eta < best) best = eta;
+    }
+    return best.ceil();
+  }
+
   Future<DateTime?> _lastActionAt() async {
     final prefs = await SharedPreferences.getInstance();
     final millis = prefs.getInt(_lastActionKey);
@@ -235,6 +271,7 @@ class StudentController extends ChangeNotifier {
     _stopsSub?.cancel();
     _checkInSub?.cancel();
     _exitWatchSub?.cancel();
+    _shuttleSub?.cancel();
     super.dispose();
   }
 }

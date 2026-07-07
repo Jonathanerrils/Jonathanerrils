@@ -55,7 +55,15 @@ phone + one emulator with spoofed location) plus the Firebase console.
 - [ ] Driver map: tapping a badge's info bubble marks that stop en route (list view reflects it).
 - [ ] Map screens are opt-in only — the default student flow never loads map tiles.
 
-## 10. Roles & privacy
+## 10. Phase 3 — analytics & service log
+- [ ] Each new check-in bumps `analytics_daily/{stopId}_{date}` (total + the right `hN` hour bucket); switching stops credits the *new* stop only.
+- [ ] Admin → Analytics tab: today's totals match reality, stops sorted busiest-first, peak hour label matches the tallest bar, long-press a bar shows hour + count.
+- [ ] Previous-day arrow shows historical days; days with no data say so instead of erroring.
+- [ ] Driver taps **Arrived** → a `trips` doc appears with `waitingAtArrival` equal to the count at that moment and the right driver uid.
+- [ ] Student checked-in card shows "~N min" once a shuttle is live, and the number updates as the shuttle moves; no shuttle stream runs while not checked in.
+- [ ] As a non-admin, reading `analytics_daily` or `trips` is denied by rules.
+
+## 11. Roles & privacy
 - [ ] Student account never sees the driver dashboard and vice versa.
 - [ ] As a driver, attempt to read `checkins` (console/REST with driver auth) → denied; drivers see only aggregate counts.
 - [ ] Self-signup with a non-KNUST email domain → rejected client-side.

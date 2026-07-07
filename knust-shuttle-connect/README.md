@@ -13,12 +13,11 @@ demand is highest.
   interfaces, use cases) · `data/` (Firestore models + repository
   implementations) · `presentation/` (screens + controllers per role)
 
-Status: **Phases 1 and 2 complete** — auth (KNUST email + phone-OTP
-fallback), stop list, GPS-verified check-in with auto-expiry, board/cancel,
-driver live-count dashboard with en-route status, push notifications,
-arrival "Did you board?" decay, and map views for both roles (numbered
-demand badges per stop, live shuttle positions with rough ETAs). Phase 3
-(full shuttle tracking polish, admin analytics dashboard) is outlined below.
+Status: **Phases 1–3 complete** — auth (KNUST email + phone-OTP fallback),
+GPS-verified check-in with auto-expiry, board/cancel, driver live-count
+dashboard with en-route status, push notifications, arrival "Did you
+board?" decay, map views for both roles with live shuttles and ETAs, and
+admin analytics (peak hours per stop, daily demand, `trips` service log).
 
 ---
 
@@ -170,8 +169,10 @@ avoids fat binaries.
 ## 10. Roadmap
 
 - ~~**Phase 2:** map views (student + driver), phone-number OTP fallback
-  sign-in~~ — done. Students see numbered demand badges + live shuttles
-  with a rough straight-line ETA; drivers get a tappable demand map.
-- **Phase 3:** route-aware ETAs, admin web dashboard (peak-hour analytics
-  from a `trips` collection written by Cloud Functions), richer in-app
-  notification handling.
+  sign-in~~ — done.
+- ~~**Phase 3:** live shuttle ETAs on the student home card, admin
+  analytics (peak hours per stop, daily demand patterns, `trips` service
+  log)~~ — done, as an in-app Analytics tab for admins.
+- **Later ideas:** route-aware ETAs (road network instead of straight
+  line), a standalone web dashboard for the transport office, weekly
+  demand exports, richer in-app notification handling.

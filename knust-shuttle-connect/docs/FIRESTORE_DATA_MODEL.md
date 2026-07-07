@@ -1,6 +1,7 @@
 # Firestore Data Model
 
-Five collections: `users`, `stops`, `checkins`, `shuttles`, `trips`.
+Six collections: `users`, `stops`, `checkins`, `shuttles`, `trips`,
+`analytics_daily`.
 Payloads are deliberately tiny (a handful of scalar fields per doc) — the
 whole student flow costs a few KB of data.
 
@@ -63,11 +64,32 @@ Live position for on-duty drivers who opted in (Phase 2/3 map + ETA source).
 | `heading`, `speed` | number | from GPS |
 | `updatedAt` | timestamp | staleness check for the map |
 
-## `trips/{tripId}` (Phase 3)
+## `trips/{tripId}`
 
-Append-only analytics log written by Cloud Functions when a driver clears a
-served stop (stop, counts at arrival, timestamps) — the source for
-peak-hours/demand-pattern dashboards. Admin read-only; no client writes.
+Append-only service log, written by `onStopStatusChanged` the moment a
+driver marks **Arrived**. Admin read-only; no client writes.
+
+| Field | Type | Notes |
+|---|---|---|
+| `stopId`, `stopName` | string | stop that was served |
+| `driverUid` | string? | which shuttle served it |
+| `enRouteAt`, `arrivedAt` | timestamp? | response time = arrivedAt − enRouteAt |
+| `waitingAtArrival` | number | queue size when the shuttle pulled in |
+| `createdAt` | timestamp | |
+
+## `analytics_daily/{stopId}_{yyyy-MM-dd}`
+
+Per-stop, per-day demand counters bumped by `onCheckInWritten` on every new
+check-in — the source for the admin Analytics tab (peak hours, daily
+patterns). Ghana is UTC year-round, so UTC hour buckets are local hours.
+Admin read-only; written only by Cloud Functions.
+
+| Field | Type | Notes |
+|---|---|---|
+| `stopId` | string | |
+| `date` | string | `yyyy-MM-dd` (query key) |
+| `total` | number | check-ins that day |
+| `hourly` | map | `h0`…`h23` → check-ins started in that hour |
 
 ## Count integrity — who writes what
 

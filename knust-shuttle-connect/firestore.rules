@@ -85,5 +85,11 @@ service cloud.firestore {
       allow read: if hasRole('admin');
       allow write: if false;
     }
+
+    // Per-stop, per-day demand counters (doc id: {stopId}_{yyyy-MM-dd}).
+    match /analytics_daily/{docId} {
+      allow read: if hasRole('admin');
+      allow write: if false;
+    }
   }
 }
