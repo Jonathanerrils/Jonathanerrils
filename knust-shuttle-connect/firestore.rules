@@ -1,0 +1,89 @@
+rules_version = '2';
+
+// KNUST Shuttle Connect — Firestore security rules.
+//
+// Trust model:
+//  - waitingCount on stops is maintained ONLY by Cloud Functions (Admin SDK
+//    bypasses these rules); no client can write it.
+//  - Students can only create/replace/delete THEIR OWN check-in (doc id ==
+//    their uid), which also structurally enforces one active check-in.
+//  - Drivers may only touch the en-route fields on stops, and their own
+//    shuttle-position doc. Only admins edit stop definitions.
+//  - Privacy: drivers get no read access to checkins, so student identity
+//    is never exposed — drivers only ever see aggregate counts on stops.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && profile().role == role;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || hasRole('admin'));
+      // Self-signup may only create a student profile. Driver/admin profiles
+      // are provisioned server-side (console or Admin SDK).
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role == 'student';
+      // Users can update their own profile but never their role.
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    match /stops/{stopId} {
+      allow read: if signedIn();
+      allow create, delete: if hasRole('admin');
+      // Admins edit stop definitions; drivers may only set/clear the
+      // en-route status fields (never waitingCount or coordinates).
+      allow update: if hasRole('admin')
+        || (hasRole('driver')
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['enRouteBy', 'enRouteAt', 'arrivedAt']));
+    }
+
+    match /checkins/{uid} {
+      function validCheckIn() {
+        return request.resource.data.keys().hasOnly(
+                 ['stopId', 'stopName', 'createdAt', 'updatedAt', 'expiresAt'])
+          && request.resource.data.stopId is string
+          && exists(/databases/$(database)/documents/stops/$(request.resource.data.stopId))
+          // Client cannot push expiry more than 30 min out (TTL is 25 min).
+          && request.resource.data.expiresAt is timestamp
+          && request.resource.data.expiresAt.toMillis()
+               <= request.time.toMillis() + 30 * 60 * 1000;
+      }
+
+      allow read: if signedIn() && (request.auth.uid == uid || hasRole('admin'));
+      allow create: if signedIn() && request.auth.uid == uid && validCheckIn();
+      // Server-side rate limit: at most one check-in action per ~minute.
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && validCheckIn()
+        && request.time > resource.data.updatedAt + duration.value(55, 's');
+      allow delete: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /shuttles/{driverUid} {
+      allow read: if signedIn();
+      allow write: if hasRole('driver') && request.auth.uid == driverUid;
+    }
+
+    // Phase 3 analytics — written by Cloud Functions, read by admins.
+    match /trips/{tripId} {
+      allow read: if hasRole('admin');
+      allow write: if false;
+    }
+  }
+}
