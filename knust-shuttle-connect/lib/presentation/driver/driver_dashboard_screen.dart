@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../domain/entities/app_user.dart';
 import '../../domain/entities/bus_stop.dart';
 import '../../domain/repositories/stop_repository.dart';
 import '../auth/auth_controller.dart';
 import 'driver_controller.dart';
+import 'driver_map_screen.dart';
 
 /// Glanceable list of stops sorted by waiting students, highest first.
 /// Large touch targets; meant to be read while STOPPED, never while driving.
@@ -79,6 +79,17 @@ class _DriverDashboardViewState extends State<_DriverDashboardView> {
         title: const Text('Waiting students'),
         actions: [
           IconButton(
+            tooltip: 'Demand map',
+            icon: const Icon(Icons.map_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              // Re-share this screen's controller with the pushed route.
+              builder: (_) => ChangeNotifierProvider.value(
+                value: controller,
+                child: const DriverMapScreen(),
+              ),
+            )),
+          ),
+          IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),
             onPressed: () => context.read<AuthController>().signOut(),
@@ -116,11 +127,7 @@ class _StopTile extends StatelessWidget {
 
   const _StopTile({required this.stop});
 
-  Color get _demandColor => stop.waitingCount >= AppConstants.busyThreshold
-      ? AppColors.demandHigh
-      : stop.waitingCount >= AppConstants.moderateThreshold
-          ? AppColors.demandMedium
-          : AppColors.demandLow;
+  Color get _demandColor => AppColors.demandColor(stop.waitingCount);
 
   @override
   Widget build(BuildContext context) {

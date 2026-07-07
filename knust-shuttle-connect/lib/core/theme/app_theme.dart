@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../constants/app_constants.dart';
+
 /// KNUST palette: cardinal red, gold and green accents.
 class AppColors {
   AppColors._();
@@ -12,6 +14,14 @@ class AppColors {
   static const Color demandHigh = Color(0xFFD32F2F);
   static const Color demandMedium = Color(0xFFF9A825);
   static const Color demandLow = Color(0xFF2E7D32);
+
+  /// Shared red/amber/green coding used by the list tiles and map badges.
+  static Color demandColor(int waitingCount) =>
+      waitingCount >= AppConstants.busyThreshold
+          ? demandHigh
+          : waitingCount >= AppConstants.moderateThreshold
+              ? demandMedium
+              : demandLow;
 }
 
 class AppTheme {

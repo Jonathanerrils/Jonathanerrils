@@ -13,11 +13,12 @@ demand is highest.
   interfaces, use cases) · `data/` (Firestore models + repository
   implementations) · `presentation/` (screens + controllers per role)
 
-Status: **Phase 1 (MVP) complete** — auth, stop list, GPS-verified check-in
-with auto-expiry, driver live-count dashboard — plus Phase 2 pieces that fall
-out of the same data model (board/cancel, en-route status, push
-notifications, arrival "Did you board?" decay). Map views, live shuttle ETAs
-and the admin analytics dashboard are Phase 2/3 (see below).
+Status: **Phases 1 and 2 complete** — auth (KNUST email + phone-OTP
+fallback), stop list, GPS-verified check-in with auto-expiry, board/cancel,
+driver live-count dashboard with en-route status, push notifications,
+arrival "Did you board?" decay, and map views for both roles (numbered
+demand badges per stop, live shuttle positions with rough ETAs). Phase 3
+(full shuttle tracking polish, admin analytics dashboard) is outlined below.
 
 ---
 
@@ -45,7 +46,12 @@ the generated folders after making the platform edits in §4.
 
 1. Create a Firebase project (e.g. `knust-shuttle-connect`) at
    <https://console.firebase.google.com>. Enable:
-   - **Authentication** → Email/Password
+   - **Authentication** → Email/Password **and Phone**. For phone auth on
+     Android, add your app's SHA-1/SHA-256 fingerprints in Project settings
+     (`cd android && ./gradlew signingReport`) so Play Integrity /
+     reCAPTCHA verification works. Add a couple of *test phone numbers*
+     (Authentication → Sign-in method → Phone → advanced) so you can develop
+     without burning real SMS quota.
    - **Firestore** (production mode; region `europe-west1` is closest to Ghana)
    - **Cloud Messaging**
 2. Wire the app to the project (overwrites the placeholder
@@ -75,24 +81,24 @@ Self-signup always creates a **student**. To promote an account, edit its
 `admin` (or use the Admin SDK). Security rules prevent users from changing
 their own role.
 
-## 4. Google Maps API keys (Phase 2)
+## 4. Google Maps API keys (required)
 
-The MVP ships the data-light list views only. When enabling the map views:
+The default flows are data-light lists, but both roles have an opt-in map
+view (map icon in the app bar), so Maps keys are needed:
 
-1. Uncomment `google_maps_flutter` in `pubspec.yaml`.
-2. Create an API key in Google Cloud console (enable *Maps SDK for Android*
+1. Create an API key in Google Cloud console (enable *Maps SDK for Android*
    and *Maps SDK for iOS*; restrict the key to those APIs + your app IDs).
-3. Android — `android/app/src/main/AndroidManifest.xml` inside `<application>`:
+2. Android — `android/app/src/main/AndroidManifest.xml` inside `<application>`:
    ```xml
    <meta-data android:name="com.google.android.geo.API_KEY"
               android:value="YOUR_ANDROID_KEY"/>
    ```
-4. iOS — `ios/Runner/AppDelegate.swift`:
+3. iOS — `ios/Runner/AppDelegate.swift`:
    ```swift
    GMSServices.provideAPIKey("YOUR_IOS_KEY")
    ```
 
-### Required platform permissions (MVP)
+### Required platform permissions
 
 Android `AndroidManifest.xml`:
 
@@ -130,8 +136,9 @@ flutter build apk --release --split-per-abi
 flutter build ipa --release
 ```
 
-Keep the APK modest: the MVP deliberately excludes the Maps SDK, uses
-Material icons only, and `--split-per-abi` avoids fat binaries.
+Keep the APK modest: the app uses Material icons only (no bundled image
+assets — even map badges are drawn at runtime), and `--split-per-abi`
+avoids fat binaries.
 
 ## 7. How count accuracy is enforced
 
@@ -162,7 +169,9 @@ Material icons only, and `--split-per-abi` avoids fat binaries.
 
 ## 10. Roadmap
 
-- **Phase 2:** map views (student + driver), richer notification handling,
-  phone-number OTP fallback sign-in
-- **Phase 3:** live shuttle tracking with ETAs, admin web dashboard
-  (peak-hour analytics from a `trips` collection written by Cloud Functions)
+- ~~**Phase 2:** map views (student + driver), phone-number OTP fallback
+  sign-in~~ — done. Students see numbered demand badges + live shuttles
+  with a rough straight-line ETA; drivers get a tappable demand map.
+- **Phase 3:** route-aware ETAs, admin web dashboard (peak-hour analytics
+  from a `trips` collection written by Cloud Functions), richer in-app
+  notification handling.

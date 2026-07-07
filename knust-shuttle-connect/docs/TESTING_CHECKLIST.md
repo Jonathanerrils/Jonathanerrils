@@ -45,7 +45,17 @@ phone + one emulator with spoofed location) plus the Firebase console.
 - [ ] Check in while offline at a valid stop → action queues; on reconnect the check-in syncs and counts update.
 - [ ] Kill and reopen the app offline → cached stops render instantly.
 
-## 9. Roles & privacy
+## 9. Phase 2 — maps & phone-OTP sign-in
+- [ ] Phone sign-in with a Firebase *test number* → OTP screen appears, correct code signs in, a `users` doc with `role: student` is created on first sign-in.
+- [ ] Wrong OTP code → clear error, can retry; "Wrong number / resend" returns to the phone field.
+- [ ] Local formats (`0551234567`, `055 123 4567`) normalise to `+233…`; garbage input is rejected before any SMS is sent.
+- [ ] Student map: every stop shows a numbered badge matching the list counts, colour-coded; checking in elsewhere updates badges live.
+- [ ] Driver on duty with location sharing on → an azure shuttle marker appears on the student map and moves; toggling off duty (or 5 min of silence) removes it.
+- [ ] ETA card shows a plausible "~N min" for the student's stop and updates as the shuttle moves.
+- [ ] Driver map: tapping a badge's info bubble marks that stop en route (list view reflects it).
+- [ ] Map screens are opt-in only — the default student flow never loads map tiles.
+
+## 10. Roles & privacy
 - [ ] Student account never sees the driver dashboard and vice versa.
 - [ ] As a driver, attempt to read `checkins` (console/REST with driver auth) → denied; drivers see only aggregate counts.
 - [ ] Self-signup with a non-KNUST email domain → rejected client-side.

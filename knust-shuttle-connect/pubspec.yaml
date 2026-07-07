@@ -20,9 +20,9 @@ dependencies:
   provider: ^6.1.2
   shared_preferences: ^2.3.2
   intl: ^0.19.0
-  # Phase 2 — uncomment when adding the map views (adds several MB to the APK,
-  # keep the MVP data-light and small for low-RAM devices):
-  # google_maps_flutter: ^2.9.0
+  # Phase 2 map views. Map tiles cost mobile data, so the maps are opt-in
+  # screens — the default student/driver flows stay on the data-light lists.
+  google_maps_flutter: ^2.9.0
 
 dev_dependencies:
   flutter_test:

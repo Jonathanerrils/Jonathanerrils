@@ -6,9 +6,11 @@ import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
 import 'data/repositories/firebase_auth_repository.dart';
 import 'data/repositories/firestore_check_in_repository.dart';
+import 'data/repositories/firestore_shuttle_repository.dart';
 import 'data/repositories/firestore_stop_repository.dart';
 import 'domain/repositories/auth_repository.dart';
 import 'domain/repositories/check_in_repository.dart';
+import 'domain/repositories/shuttle_repository.dart';
 import 'domain/repositories/stop_repository.dart';
 import 'presentation/auth/auth_controller.dart';
 import 'presentation/root_gate.dart';
@@ -31,6 +33,9 @@ class KnustShuttleApp extends StatelessWidget {
         Provider<StopRepository>(create: (_) => FirestoreStopRepository(db)),
         Provider<CheckInRepository>(
           create: (_) => FirestoreCheckInRepository(db),
+        ),
+        Provider<ShuttleRepository>(
+          create: (_) => FirestoreShuttleRepository(db),
         ),
         ChangeNotifierProvider<AuthController>(
           create: (ctx) => AuthController(ctx.read<AuthRepository>()),

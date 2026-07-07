@@ -11,6 +11,7 @@ import '../auth/auth_controller.dart';
 import '../common/last_updated_banner.dart';
 import 'stop_picker_sheet.dart';
 import 'student_controller.dart';
+import 'student_map_screen.dart';
 
 /// Target flow: open app -> one big button -> done, in under 5 seconds.
 class StudentHomeScreen extends StatelessWidget {
@@ -49,6 +50,17 @@ class _StudentHomeView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('KNUST Shuttle Connect'),
         actions: [
+          IconButton(
+            tooltip: 'Campus map',
+            icon: const Icon(Icons.map_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              // Re-share this screen's controller with the pushed route.
+              builder: (_) => ChangeNotifierProvider.value(
+                value: controller,
+                child: const StudentMapScreen(),
+              ),
+            )),
+          ),
           IconButton(
             tooltip: 'Sign out',
             icon: const Icon(Icons.logout),

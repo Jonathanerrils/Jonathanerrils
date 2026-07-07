@@ -36,4 +36,9 @@ class AppConstants {
 
   /// FCM topic for a stop; students at the stop subscribe to it.
   static String stopTopic(String stopId) => 'stop_$stopId';
+
+  /// Initial map camera: KNUST campus centre.
+  static const double campusCenterLat = 6.6745;
+  static const double campusCenterLng = -1.5716;
+  static const double campusDefaultZoom = 15;
 }
