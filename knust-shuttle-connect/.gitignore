@@ -1,0 +1,25 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+
+# Platform folders are generated with `flutter create .` and then customised;
+# once generated, remove these two lines so android/ and ios/ are committed.
+# android/
+# ios/
+
+# Firebase local config — regenerate with `flutterfire configure`
+# (firebase_options.dart in this repo is a placeholder stub and IS committed).
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+.firebase/
+*.log
+
+# Secrets
+*.keystore
+key.properties
+serviceAccountKey.json
