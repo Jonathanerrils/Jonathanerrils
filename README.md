@@ -1,6 +1,6 @@
 - 👋 Hi, I’m @Jonathanerrils
 - 👀 I’m interested in data science
-- 🌱 I’m currently learning statistics 
+- 🌱 I’m currently a statistician 
 - 💞️ I’m looking to collaborate on data analysis 
 - 📫 How to reach me 0575173340
 
